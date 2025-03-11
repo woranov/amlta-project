@@ -460,7 +460,10 @@ def _interpret_python(locals: dict[str, object], code: str):
     if isinstance(result, pd.Series):
         result = result.to_frame().T
 
-    return result.to_dict(orient="records"), exception
+    if result is not None:
+        return result.to_dict(orient="records"), exception
+    else:
+        return None, exception
 
 
 analyze_results_system_prompt = rf"""
