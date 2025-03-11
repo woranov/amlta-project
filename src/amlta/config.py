@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from os import PathLike, environ
 from pathlib import Path
@@ -65,8 +66,14 @@ if IN_COLAB:
     if not data_dir:
         try:
             data_dir = userdata.get("COLAB_DATA_DIR")
+
         except Exception:
             pass
+        try:
+            os.environ["OPENAI_API_KEY"] = userdata.get("OPENAI_API_KEY")
+        except Exception:
+            pass
+
     if not data_dir:
         data_dir = drive_path / "uni" / "ws2425" / "amlta" / "project" / "data"
 

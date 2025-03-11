@@ -150,6 +150,8 @@ async def main(args: argparse.Namespace = UNSET_ARGS):
         config.ollama_model = args.model
     if args.base_url:
         config.ollama_base_url = args.base_url
+    if args.use_openai:
+        config.use_openai = args.use_openai
 
     # late import to ensure config was loaded first
     from amlta.app.agent.graph import main as graph
@@ -222,6 +224,12 @@ async def launch():
         "--model", type=str, default="llama3.2", help="Ollama model to use"
     )
     parser.add_argument("--base-url", type=str, default=None, help="Ollama base URL")
+    parser.add_argument(
+        "--use-openai",
+        action="store_true",
+        default=False,
+        help="Use OpenAI instead of Ollama",
+    )
 
     args = parser.parse_args()
     await main(args)

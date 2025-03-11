@@ -46,7 +46,7 @@ from amlta.app.agent.core import (
     SelectingProcessEvent,
     load_collections,
 )
-from amlta.app.llm import get_ollama
+from amlta.app.llm import get_ollama, get_openai
 from amlta.formatting.data import create_process_section
 from amlta.formatting.markdown import format_as_markdown
 from amlta.probas.flows import extract_process_flows
@@ -65,6 +65,15 @@ from amlta.tapas.retrieve import (
     generate_tapas_chunks,
     retrieve_rows_from_chunk,
 )
+
+
+def get_llm():
+    from amlta.app import config
+
+    if config.use_openai:
+        return get_openai(model="gpt-4o-mini", temperature=0.3)
+    else:
+        return get_ollama()
 
 
 def inspect_prompt(input: dict):
@@ -124,7 +133,7 @@ async def rewrite_process_query(
 ) -> RewrittenProcessQuery:
     writer(AgentEvent(event=RewritingProcessQueryEvent()))
 
-    llm = get_ollama().with_structured_output(RewrittenProcessQuery)
+    llm = get_llm().with_structured_output(RewrittenProcessQuery)
 
     chain = base_prompt | inspect_prompt | llm
 
@@ -168,6 +177,9 @@ life cycle inventory database.
     excludes the specific process itself. Furthermore, the query must match the syntax explained in the
     schema field description.
 
+Write only "simple" queries, i.e., queries that do not contain any complex logic. See examples
+below.
+
 ## Output format ##
 `queries`: {FlowQueries.model_fields["queries"].description}
 `join_type`: {FlowQueries.model_fields["join_type"].description}
@@ -191,7 +203,7 @@ async def rewrite_flows_query(
 ) -> FlowQueries:
     writer(AgentEvent(event=RewritingFlowsQueriesEvent()))
 
-    llm = get_ollama().with_structured_output(
+    llm = get_llm().with_structured_output(
         FlowQueries, method="json_schema", include_raw=True
     )
     chain = base_prompt | llm
@@ -254,7 +266,7 @@ async def select_process(
 ) -> SelectedProcess:
     writer(AgentEvent(event=SelectingProcessEvent()))
 
-    llm = get_ollama().with_structured_output(SelectedProcess)
+    llm = get_llm().with_structured_output(SelectedProcess)
     chain = base_prompt | llm
 
     def _format_candidate(index: int, process: ProcessData) -> str:
@@ -382,7 +394,7 @@ async def filter_flows_llm_chunk(
     if chunk.empty:
         return FilteredFlows(flow_indices=[], aggregation=aggregation)
 
-    llm = get_ollama().with_structured_output(FlowValidation)
+    llm = get_llm().with_structured_output(FlowValidation)
     chain = base_prompt | llm
 
     human_template = "<question>{question}</question>\n<flows>\n{flows}\n</flows>"
@@ -615,7 +627,7 @@ async def analyze_results(
         df_heads=df_heads,
     )
 
-    llm = get_ollama().with_structured_output(PandasCodeOutput, method="json_schema")
+    llm = get_llm().with_structured_output(PandasCodeOutput, method="json_schema")
     chain = base_prompt | llm
 
     res = cast(
@@ -718,7 +730,7 @@ async def get_final_answer(
     analysis_result: ProcessFlowAnalysisResult,
     writer: StreamWriter = noop_writer,
 ):
-    llm = get_ollama()
+    llm = get_llm()
     chain = base_prompt | llm
 
     retriever = load_collections().glossary.as_retriever(
