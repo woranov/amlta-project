@@ -23,3 +23,5 @@ data/qdrant*/*
 !data/qdrant*/meta.json
 
 data/tapas-ft/checkpoints/*
+
+data/jina-ft/

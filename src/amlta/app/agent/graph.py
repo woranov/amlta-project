@@ -812,21 +812,24 @@ async def main(user_question: str, writer: StreamWriter) -> AgentOutput:
     rewritten_process_query = rewritten_process_query_resp.query
 
     collections = load_collections()
-    candidate_processes_docs = collections.processes.similarity_search(
-        rewritten_process_query, k=25
+    # candidate_processes_docs = collections.processes.similarity_search(
+    #     rewritten_process_query, k=25
+    # )
+    # ranked = collections.reranker.rank(
+    #     rewritten_process_query,
+    #     [doc.page_content for doc in candidate_processes_docs],
+    #     top_k=10,
+    #     num_workers=0,
+    # )
+    # reranked_docs = [
+    #     candidate_processes_docs[res["corpus_id"]]  # type: ignore
+    #     for res in ranked
+    # ]
+    reranked_docs = collections.processes.similarity_search(
+        rewritten_process_query, k=10
     )
-    ranked = collections.reranker.rank(
-        rewritten_process_query,
-        [doc.page_content for doc in candidate_processes_docs],
-        top_k=10,
-        num_workers=0,
-    )
-    reranked_docs = [
-        candidate_processes_docs[res["corpus_id"]]  # type: ignore
-        for res in ranked
-    ]
 
-    candidate_processes = [
+    candidate_processes: list[ProcessData] = [
         ProcessData.from_uuid(doc.metadata["uuid"]) for doc in reranked_docs
     ]
     writer(

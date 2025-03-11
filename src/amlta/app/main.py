@@ -1,10 +1,13 @@
 import argparse
 import logging
+import random
 from typing import Callable, cast
 from uuid import uuid4
 
+import numpy
 import pandas as pd
 import streamlit as st
+import torch
 
 from amlta.formatting.data import create_process_section
 from amlta.formatting.markdown import format_as_markdown
@@ -153,6 +156,10 @@ async def main(args: argparse.Namespace = UNSET_ARGS):
 
     with chat_history:
         if user_input := chat_input_container.chat_input("Type your message"):
+            random.seed(42)
+            torch.manual_seed(42)
+            numpy.random.seed(42)
+
             _process_selection_container = None
             _flows_selection_container = None
             _flows_analysis_container = None
